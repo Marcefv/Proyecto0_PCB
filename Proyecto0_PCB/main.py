@@ -4,6 +4,7 @@ from gi.repository import Gtk
 from itertools import product
 import random
 from Fenotipo import Fenotipo
+from IO import Io
 
 
 class Main:
@@ -17,7 +18,7 @@ class Main:
         self.window = self.builder.get_object("Window")
 
         #objeto spin button para cambiar cuantas caracteristicas hay
-        self.spin = self.builder.get_object("spinButton")
+        self.spin = self.builder.get_object("spin_cantidad")
 
         #boton para generar posibles genotipos de progenitores
         self.btn_generar_prog = self.builder.get_object("btn_generar_prog")
@@ -60,6 +61,15 @@ class Main:
         #botonoes colores
         self.rb_genotipo = self.builder.get_object("rb_colorear_genotipo")
         self.rb_fenotipo = self.builder.get_object("rb_colorear_fenotipo")
+
+        #boton guardar y generar archivo y cargar archivo
+        self.btn_save = self.builder.get_object("btn_save")
+        self.btn_load = self.builder.get_object("btn_load")
+
+        #boton para mostrar porcentajes
+        self.btn_porcentajes = self.builder.get_object("btn_porcentajes")
+        self.text_view1 = self.builder.get_object("text_view1")
+        self.text_view2 = self.builder.get_object("text_view2")
 
         #mostrar elementos
         self.window.show()
@@ -115,6 +125,14 @@ class Main:
         self.lista_caracteristicas[10].set_text("c")
         self.lista_caracteristicas[12].set_text("D")
         self.lista_caracteristicas[14].set_text("d")
+        self.lista_caracteristicas[1].set_text("")
+        self.lista_caracteristicas[3].set_text("")
+        self.lista_caracteristicas[5].set_text("")
+        self.lista_caracteristicas[7].set_text("")
+        self.lista_caracteristicas[9].set_text("")
+        self.lista_caracteristicas[11].set_text("")
+        self.lista_caracteristicas[13].set_text("")
+        self.lista_caracteristicas[15].set_text("")
         self.genotipo1 = ""
         self.genotipo2 = ""
         self.label_genotipo1 = ""
@@ -138,31 +156,38 @@ class Main:
             else:
                 obj.set_text(widget.get_text().upper())
 
+    #almacena las caracteristicas de los genotipos
     caract_genotipos = {}
+    dict = {}
+    #genera los posibles gentoipos de los progenitores
     def on_btn_generar_prog_clicked(self, button):
-
+        self.caract_genotipos = {}
+        self.dict = {}
         #borrar genotipos de la lista
         while True:
             if self.grid.get_child_at(0,1)!=None:
                 self.grid.remove_row(1)
             else:
                 break
-
+        #borrar resultados de cruce
         for columna in self.treeview.get_columns():
             self.treeview.remove_column(columna)
 
-
+        #oculta label de cruce
         self.label_cruce.set_visible(False)
 
+        self.porcentaje_fenotipos = "Fenotipos:\n\n"
+        self.porcentajes_genotipos = "Genotipos:\n\n"
+        self.borrar_text_view()
 
-
+        #guarda la lista con genotipos
         list_genotipos =list()
         inicial = ""
 
         #validaciones de los campos y generar lista de caracteristicas
         for index, widget in enumerate(self.lista_caracteristicas):
-            # determinar cual informacion validadr dependiendo de si es visible o no
 
+            # determinar cual informacion validadr dependiendo de si es visible o no
             if widget.get_visible():
                 if index == 0:
                     inicial = widget.get_text()
@@ -214,7 +239,7 @@ class Main:
             genotipos_combinacion = list(map("".join, product(list_genotipos[0:3], list_genotipos[3:6], list_genotipos[6:9], list_genotipos[9:13])))
 
         #agregar los genotipos a la pantalla de genotipos
-        dict = {}
+
         for index, value in enumerate(genotipos_combinacion):
             #varaibale que va a contener el string con caracteristicas del genotipo
             caracteristica = ""
@@ -230,36 +255,37 @@ class Main:
 
             #si es el primer elemento se crea un radio button y luego los demas van a pertenecer a ese grupo
             if index == 0:
-                 dict["rb{0}".format(index)] = Gtk.RadioButton(label=genotipos_combinacion[index])
-                 dict["rb{0}".format(index)].connect("toggled", self.seleccion_grupo1)
-                 self.grid.attach_next_to(dict["rb{0}".format(index)], self.progenitor_1, Gtk.PositionType.BOTTOM, 1, 1)
-                 dict["rb2{0}".format(index)] = Gtk.RadioButton(label=genotipos_combinacion[index])
-                 dict["rb2{0}".format(index)].connect("toggled", self.seleccion_grupo2)
-                 self.grid.attach_next_to(dict["rb2{0}".format(index)], self.progenitor_2, Gtk.PositionType.BOTTOM, 1, 1)
-                 dict["rb{0}".format(index)].set_tooltip_text(caracteristica)
-                 dict["rb2{0}".format(index)].set_tooltip_text(caracteristica)
-                 self.genotipo1 = [(dict["rb{0}".format(index)].get_label()[i:i+2]) for i in range(0, len(dict["rb{0}".format(index)].get_label()), 2)]
-                 self.genotipo2 = [(dict["rb2{0}".format(index)].get_label()[i:i+2]) for i in range(0, len(dict["rb2{0}".format(index)].get_label()), 2)]
-                 self.label_genotipo1 = dict["rb{0}".format(index)].get_label()
-                 self.label_genotipo2 = dict["rb2{0}".format(index)].get_label()
+                 self.dict["rb{0}".format(index)] = Gtk.RadioButton(label=genotipos_combinacion[index])
+                 self.dict["rb{0}".format(index)].connect("toggled", self.seleccion_grupo1)
+                 self.grid.attach_next_to(self.dict["rb{0}".format(index)], self.progenitor_1, Gtk.PositionType.BOTTOM, 1, 1)
+                 self.dict["rb20{0}".format(index)] = Gtk.RadioButton(label=genotipos_combinacion[index])
+                 self.dict["rb20{0}".format(index)].connect("toggled", self.seleccion_grupo2)
+                 self.grid.attach_next_to(self.dict["rb20{0}".format(index)], self.progenitor_2, Gtk.PositionType.BOTTOM, 1, 1)
+                 self.dict["rb{0}".format(index)].set_tooltip_text(caracteristica)
+                 self.dict["rb20{0}".format(index)].set_tooltip_text(caracteristica)
+                 self.genotipo1 = [(self.dict["rb{0}".format(index)].get_label()[i:i+2]) for i in range(0, len(self.dict["rb{0}".format(index)].get_label()), 2)]
+                 self.genotipo2 = [(self.dict["rb20{0}".format(index)].get_label()[i:i+2]) for i in range(0, len(self.dict["rb20{0}".format(index)].get_label()), 2)]
+                 self.label_genotipo1 = self.dict["rb{0}".format(index)].get_label()
+                 self.label_genotipo2 = self.dict["rb20{0}".format(index)].get_label()
             else:
-                 dict["rb{0}".format(index)] = Gtk.RadioButton.new_with_mnemonic_from_widget(
-                     dict["rb0"], genotipos_combinacion[index])
-                 dict["rb{0}".format(index)].connect("toggled", self.seleccion_grupo1)
-                 self.grid.attach_next_to(dict["rb{0}".format(index)], dict["rb{0}".format(index-1)],
+                 self.dict["rb{0}".format(index)] = Gtk.RadioButton.new_with_mnemonic_from_widget(
+                     self.dict["rb0"], genotipos_combinacion[index])
+                 self.dict["rb{0}".format(index)].connect("toggled", self.seleccion_grupo1)
+                 self.grid.attach_next_to(self.dict["rb{0}".format(index)], self.dict["rb{0}".format(index-1)],
                                           Gtk.PositionType.BOTTOM, 1, 1)
-                 dict["rb2{0}".format(index)] = Gtk.RadioButton.new_with_mnemonic_from_widget(
-                     dict["rb20"], genotipos_combinacion[index])
-                 dict["rb2{0}".format(index)].connect("toggled", self.seleccion_grupo2)
-                 self.grid.attach_next_to(dict["rb2{0}".format(index)], dict["rb2{0}".format(index - 1)],
+                 self.dict["rb20{0}".format(index)] = Gtk.RadioButton.new_with_mnemonic_from_widget(
+                     self.dict["rb200"], genotipos_combinacion[index])
+                 self.dict["rb20{0}".format(index)].connect("toggled", self.seleccion_grupo2)
+                 self.grid.attach_next_to(self.dict["rb20{0}".format(index)], self.dict["rb20{0}".format(index - 1)],
                                           Gtk.PositionType.BOTTOM, 1, 1)
+                #agrega variable caracteristica que tiene el fenotipo escrito como tooltip
+                 self.dict["rb{0}".format(index)].set_tooltip_text(caracteristica)
+                 self.dict["rb20{0}".format(index)].set_tooltip_text(caracteristica)
+           #muestra los radio buttons con los genotipos
+            self.dict["rb{0}".format(index)].show()
+            self.dict["rb20{0}".format(index)].show()
 
-                 dict["rb{0}".format(index)].set_tooltip_text(caracteristica)
-                 dict["rb2{0}".format(index)].set_tooltip_text(caracteristica)
-            dict["rb{0}".format(index)].show()
-            dict["rb2{0}".format(index)].show()
-
-    #variables para almacenar seleccion de radio buttons
+    #variables para almacenar seleccion de radio buttons con genotipos
     genotipo1 = ""
     genotipo2 = ""
     label_genotipo1 = ""
@@ -277,17 +303,17 @@ class Main:
             self.label_genotipo2 = widget.get_label()
             self.genotipo2 = [(widget.get_label()[i:i+2]) for i in range(0, len(widget.get_label()), 2)]
 
+    #variable que indica si se debe colorear cruce por genotipo o no
     color_por_genotipo = True
-        # saber si se elige color por fenotipo
+
+    # saber si se elige color por fenotipo
     def on_rb_colorear_fenotipo_toggled(self, widget):
-       for columna in self.treeview.get_columns():
-            self.treeview.remove_column(columna)
        if widget.get_active():
             self.color_por_genotipo = False
             self.on_cruce_btn_clicked(self.btn_cruce)
 
 
-        # saber si se elige color por genotipo
+     # saber si se elige color por genotipo
     def on_rb_colorear_genotipo_toggled(self, widget):
         if widget.get_active():
             self.color_por_genotipo = True
@@ -298,19 +324,28 @@ class Main:
         color = "#%06x" % random.randint(0, 0xFFFFFF)
         return color
 
+    porcentaje_fenotipos = "Fenotipos:\n\n"
+    porcentajes_genotipos = "Genotipos:\n\n"
     #boton de cruce, genera cruce de los genotipos de progenitores seleccionados
     def on_cruce_btn_clicked(self, widget):
 
-
+        #remueve el treeview
         for columna in self.treeview.get_columns():
             self.treeview.remove_column(columna)
 
+        #valida que haya genotipos seleccionados
         if self.label_genotipo1 == "":
             self.error("Debe seleccionar dos genotipos para cruzar")
             return
 
+        self.borrar_text_view()
+
+        #pone una etiqueta que muestra los genotipos que se estan cruzando
         self.label_cruce.set_text("Cruce de "+self.label_genotipo1 + "   x   "+ self.label_genotipo2)
         self.label_cruce.set_visible(True)
+
+        self.porcentaje_fenotipos ="Fenotipos:\n\n"
+        self.porcentajes_genotipos ="Genotipos:\n\n"
 
         # obtiene combinaciones para hacer los cruces
         genotipos_cruce1 = list(map("".join, product(*self.genotipo1)))
@@ -319,42 +354,71 @@ class Main:
         #hace el cruce
         resultado_cruce = list(map("".join, product(genotipos_cruce2, genotipos_cruce1)))
 
+        #obtiene todos los resultados unicos del cruce
         set_individuales = set(resultado_cruce)
 
+        #porcentaje de elementos
+        diccionarioGeno = {}
+        for genot in set_individuales:
+            diccionarioGeno[genot]= (resultado_cruce.count(genot)/len(resultado_cruce))*100
+        diccionarioGeno = {k: v for k, v in sorted(diccionarioGeno.items(), key=lambda item: item[1], reverse=True)}
+
+        #ordenado de mayor a menor
+        for key, value in diccionarioGeno.items():
+            self.porcentajes_genotipos = self.porcentajes_genotipos + key + " :" \
+                                        + str(round(value,2)) + "%\n"
+
+        #asinga un color a cada genotipo unico del cruce y lo coloca en un diccionario asociando color a genotipo
         coloresGenotipo = {}
         for elemento in set_individuales:
             coloresGenotipo[elemento] = self.generar_color()
 
+        #obtiene los fenotipos
         fenotipos = list()
         set_fenotipos = set()
         for index, val in enumerate(resultado_cruce):
+            #con el diccionario que contenia las descripciones de los fenotipos se va a determinar el fenotipo de cada elemnto del cruce
+            caracteristica = ""
             for key, val in self.caract_genotipos.items():
-                caracteristica = ""
+                #si tiene mayuscula una letra se agrega ese fenotipo a esa caracteristica,
                 if key in resultado_cruce[index]:
                     if key.isupper():
                         caracteristica += "  " + val
+                        #se crea un objeto de tipo fenotipo que va a guardar el genotipo asociado al fenotipo y el fenotipo,
+                        # tambien se agregan cracteristicas el set de fenotipos para tener fenotipos unicos
                         fenotipo = Fenotipo()
-                        fenotipo.fenotipo = caracteristica
-                        set_fenotipos.add(caracteristica)
                         fenotipo.genotipo = resultado_cruce[index]
-                        fenotipos.append(fenotipo)
-                        break
-                    else:
+                    elif resultado_cruce[index].count(key)==2:
                         caracteristica += "  " + val
                         fenotipo = Fenotipo()
-                        fenotipo.fenotipo = caracteristica
-                        set_fenotipos.add(caracteristica)
                         fenotipo.genotipo = resultado_cruce[index]
-                        fenotipos.append(fenotipo)
-
-
+            set_fenotipos.add(caracteristica)
+            fenotipo.fenotipo = caracteristica
+            fenotipos.append(fenotipo)
+        #se asocian colores a cada fenotipo unico con un diccionario
         coloresFenotipo={}
+        totalFenotipos = list()
         for elemento in set_fenotipos:
             coloresFenotipo[elemento] = self.generar_color()
+            # a cada objeto fenotipo se le agrega el color dependiendo del color del fenotipo
             for element in fenotipos:
+                totalFenotipos.append(element.fenotipo)
                 if element.fenotipo == elemento:
                     element.color = coloresFenotipo.get(elemento)
 
+
+        #porcentaje de fentotipos
+        diccionario={}
+        for fenot in set_fenotipos:
+            diccionario[fenot]= (totalFenotipos.count(fenot) / len(totalFenotipos))*100
+        diccionario = {k: v for k, v in sorted(diccionario.items(), key=lambda item: item[1], reverse=True)}
+
+        #ordenado de mayor a menor
+        for key, value in diccionario.items():
+            self.porcentaje_fenotipos = self.porcentaje_fenotipos + key + " :" \
+                                        + str(round(value,2)) + "%\n"
+
+        #se agregan los colores de genotipo y fenotipo a cada resultado del cruce
         i = 1
         colores = 0
         while i <len(resultado_cruce):
@@ -371,15 +435,18 @@ class Main:
                 resultado_cruce.append(elemento.color)
                 break
 
+        #divide el resultado del cruce en las filas que van en el treeview
         resultado_cruce = list(resultado_cruce[i: i+ (len(genotipos_cruce1) + (len(genotipos_cruce1)*2))]
                                for i in range(0, len(resultado_cruce), (len(genotipos_cruce1) + (len(genotipos_cruce1)*2))))
+
+        #agrega las etiquetas que van en la parte izquierda del treeview
         tamanio = 0
         for i in resultado_cruce:
             i.insert(0, genotipos_cruce2[tamanio])
             tamanio += 1
 
 
-        #prepara datos para ingresarlos al treeview
+        #prepara datos para ingresarlos al treeview creando una liststore
         tam = 3 * len(genotipos_cruce1) + 1
         liststore = Gtk.ListStore(*[str]*tam)
         for row in resultado_cruce:
@@ -388,16 +455,20 @@ class Main:
         #agrega el modelo al treeview
         self.treeview.set_model(liststore)
 
-        #agrega columnas al treeview
+        #agrega primera columna al treeview que tiene las etiquetas de la parte izquierda
         renderer = Gtk.CellRendererText()
         renderer.set_property("cell-background", "#E0E0E0")
         columna = Gtk.TreeViewColumn("", renderer, text=0)
         self.treeview.append_column(columna)
         texto = 1
+
+        #dependiendo de si se elige colorear por genotipo o fenotipo, el valor de color va a cambiar para elegir el color asociado
         if self.color_por_genotipo:
             color = 2
         else:
             color = 3
+
+        #agrega el resto de columnas al treeview
         for i in range(0, (len(genotipos_cruce1))):
             renderer2 = Gtk.CellRendererText()
             columna = Gtk.TreeViewColumn(genotipos_cruce1[i], renderer2, text=texto, background=color)
@@ -405,11 +476,102 @@ class Main:
             texto += 3
             color += 3
 
+    file = None
+    #guardar los datos en archivo de texto, abre un dialogo filechooser para elegir donde guardar
+    def on_btn_save_clicked(self, widget):
+        choose = Gtk.FileChooserDialog("Elija la ubicacion para guardar el archivo", parent=None, action=Gtk.FileChooserAction.SAVE )
+        choose.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
+        choose.add_button(Gtk.STOCK_SAVE, Gtk.ResponseType.ACCEPT)
+        choose.set_do_overwrite_confirmation(True)
+        choose.set_modal(True)
+        if self.file is not None:
+            try:
+                choose.set_file(self.file)
+            except:
+                ""
+        choose.connect("response", self.save_response_cb)
+        choose.show()
+
+
+    def save_response_cb(self, dialog, response_id):
+        save_dialog = dialog
+        document = Io()
+        if response_id == Gtk.ResponseType.ACCEPT:
+            self.file = save_dialog.get_current_folder()
+            self.file= self.file+"/"+save_dialog.get_current_name()
+            lista = list()
+            for i in  self.lista_caracteristicas:
+                lista.append(i.get_text())
+            document.guardar(self.file, lista, str(self.spin.get_value()))
+        dialog.destroy()
+
+    def on_btn_load_clicked(self, widget):
+        choose = Gtk.FileChooserDialog("Elija el archivo a abrir", parent=None, action=Gtk.FileChooserAction.OPEN )
+        choose.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
+        choose.add_button(Gtk.STOCK_OPEN, Gtk.ResponseType.ACCEPT)
+        choose.set_local_only(False)
+        choose.set_modal(True)
+        choose.connect("response", self.load_response_cb)
+        choose.show()
+
+    inicio_datos = list()
+    def load_response_cb(self, dialog, response_id):
+        open_dialog = dialog
+        document = Io()
+        if response_id == Gtk.ResponseType.ACCEPT:
+            self.file = open_dialog.get_filename()
+            try:
+             self.inicio_datos = document.load(self.file)
+             self.cargar_datos(self.inicio_datos)
+            except:
+               ""
+        dialog.destroy()
+
+    def cargar_datos(self, lista):
+        i = 0
+
+        self.caracteristicas_por_defecto()
+        # borrar genotipos de la lista
+        while True:
+            if self.grid.get_child_at(0, 1) != None:
+                self.grid.remove_row(1)
+            else:
+                break
+        # borrar resultados de cruce
+        for columna in self.treeview.get_columns():
+            self.treeview.remove_column(columna)
+
+        # oculta label de cruce
+        self.label_cruce.set_visible(False)
+        for i , value in enumerate(self.lista_caracteristicas):
+            if(lista[1][i]=='\n'):
+                value.set_text("")
+            else:
+                value.set_text(lista[1][i].rstrip('\n'))
+
+        self.spin.set_value(int(float(lista[0][0].strip('\n'))))
+        self.btn_generar_prog.emit("clicked")
 
 
 
+    #texto que muestra porcentajes de genotipos y fenotipos en textview
+    def on_btn_porcentajes_clicked(self,widget):
+        self.borrar_text_view()
+        buffer = self.text_view1.get_buffer()
+        buffer2 = self.text_view2.get_buffer()
+        self.text_view1.get_buffer().insert(buffer.get_start_iter(),self.porcentajes_genotipos)
+        self.text_view2.get_buffer().insert(buffer2.get_start_iter(),self.porcentaje_fenotipos)
 
 
+    def borrar_text_view(self):
+        buffer = self.text_view1.get_buffer()
+        buffer2 = self.text_view2.get_buffer()
+        buffer.delete(
+            buffer.get_start_iter(),
+            buffer.get_end_iter())
+        buffer2.delete(
+            buffer2.get_start_iter(),
+            buffer2.get_end_iter())
 
 main = Main()
 Gtk.main()

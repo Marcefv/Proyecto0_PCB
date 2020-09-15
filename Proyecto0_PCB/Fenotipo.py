@@ -3,6 +3,6 @@ class Fenotipo:
     fenotipo = ""
     color = ""
 
-
+#modelo con objeto fenotpio para amlacenar vairables relacionadas con el fenotipo
 
 
