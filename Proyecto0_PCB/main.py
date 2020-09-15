@@ -267,6 +267,10 @@ class Main:
                  self.genotipo2 = [(self.dict["rb20{0}".format(index)].get_label()[i:i+2]) for i in range(0, len(self.dict["rb20{0}".format(index)].get_label()), 2)]
                  self.label_genotipo1 = self.dict["rb{0}".format(index)].get_label()
                  self.label_genotipo2 = self.dict["rb20{0}".format(index)].get_label()
+                 self.nombre_rb1 ="rb{0}".format(index)
+                 self.nombre_rb2 = "rb20{0}".format(index)
+                 self.dict["rb20{0}".format(index)].set_property("name", "rb20{0}".format(index))
+                 self.dict["rb{0}".format(index)].set_property("name", "rb{0}".format(index))
             else:
                  self.dict["rb{0}".format(index)] = Gtk.RadioButton.new_with_mnemonic_from_widget(
                      self.dict["rb0"], genotipos_combinacion[index])
@@ -278,6 +282,8 @@ class Main:
                  self.dict["rb20{0}".format(index)].connect("toggled", self.seleccion_grupo2)
                  self.grid.attach_next_to(self.dict["rb20{0}".format(index)], self.dict["rb20{0}".format(index - 1)],
                                           Gtk.PositionType.BOTTOM, 1, 1)
+                 self.dict["rb20{0}".format(index)].set_property("name", "rb20{0}".format(index))
+                 self.dict["rb{0}".format(index)].set_property("name", "rb{0}".format(index))
                 #agrega variable caracteristica que tiene el fenotipo escrito como tooltip
                  self.dict["rb{0}".format(index)].set_tooltip_text(caracteristica)
                  self.dict["rb20{0}".format(index)].set_tooltip_text(caracteristica)
@@ -291,17 +297,21 @@ class Main:
     label_genotipo1 = ""
     label_genotipo2 = ""
 
+    nombre_rb1 = ""
+    nombre_rb2 = ""
     #obtener string de seleccion de radiobutton progenitor 1
     def seleccion_grupo1(self, widget):
         if widget.get_active():
           self.label_genotipo1 = widget.get_label()
           self.genotipo1 = [(widget.get_label()[i:i+2]) for i in range(0, len(widget.get_label()), 2)]
+          self.nombre_rb1 = widget.get_property("name")
 
     # obtener string de seleccion de radiobutton progenitor 2
     def seleccion_grupo2(self, widget):
         if widget.get_active():
             self.label_genotipo2 = widget.get_label()
             self.genotipo2 = [(widget.get_label()[i:i+2]) for i in range(0, len(widget.get_label()), 2)]
+            self.nombre_rb2 = widget.get_property("name")
 
     #variable que indica si se debe colorear cruce por genotipo o no
     color_por_genotipo = True
@@ -486,7 +496,7 @@ class Main:
         choose.set_modal(True)
         if self.file is not None:
             try:
-                choose.set_file(self.file)
+                choose.set_filename(self.file)
             except:
                 ""
         choose.connect("response", self.save_response_cb)
@@ -502,7 +512,7 @@ class Main:
             lista = list()
             for i in  self.lista_caracteristicas:
                 lista.append(i.get_text())
-            document.guardar(self.file, lista, str(self.spin.get_value()))
+            document.guardar(self.file, lista, str(self.spin.get_value()), str(self.nombre_rb1), str(self.nombre_rb2))
         dialog.destroy()
 
     def on_btn_load_clicked(self, widget):
@@ -543,14 +553,30 @@ class Main:
 
         # oculta label de cruce
         self.label_cruce.set_visible(False)
+
+        #crea valores de caracteristicas guardados en el documento
         for i , value in enumerate(self.lista_caracteristicas):
-            if(lista[1][i]=='\n'):
+            if(lista[2][i]=='\n'):
                 value.set_text("")
             else:
-                value.set_text(lista[1][i].rstrip('\n'))
-
+                value.set_text(lista[2][i].rstrip('\n'))
+        #asigna valor del spin para ver cuantas caracteristicas son visiles
         self.spin.set_value(int(float(lista[0][0].strip('\n'))))
+
+        #ejecuta el boton para generar cruces
         self.btn_generar_prog.emit("clicked")
+
+        if(lista[1][0].rstrip('\n')!= ""):
+            for row in self.grid.get_children():
+                if row.get_name() == lista[1][0].rstrip('\n'):
+                    radio_b1 = row
+                if row.get_name() == lista[1][1].rstrip('\n'):
+                    radio_b2 = row
+            radio_b1.set_active(True)
+            radio_b2.set_active(True)
+            radio_b1.emit("toggled")
+            radio_b2.emit("toggled")
+            self.btn_cruce.emit("clicked")
 
 
 
